@@ -222,8 +222,166 @@
 						}
 					]
 				}
+			},
+			{
+				"name": "nb_BronzeToSilverLayerProcessing",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "fe_IterateOnEachTable",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "BronzeToSilverDataProcess",
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "sparkPool",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Small",
+					"driverSize": "Small"
+				}
+			},
+			{
+				"name": "nb_SilverToGoldLayerProcessing",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "nb_BronzeToSilverLayerProcessing",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": "SilverToGoldDataProcess",
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": "sparkPool",
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Small",
+					"driverSize": "Small"
+				}
+			},
+			{
+				"name": "web_SuccessEmail",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "nb_SilverToGoldLayerProcessing",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"url": "https://prod-23.polandcentral.logic.azure.com:443/workflows/d8935d8b83b84994acb16074b1816e41/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=ou01X7aUwozpznGg4EuNfD3HsajukSMmZ7n0lNfmf3I",
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"body": {
+						"value": "{\n    \"to\":\"@{pipeline().parameters.to}\",\n    \"subject\":\"@{pipeline().parameters.subjectForSuccess}\",\n    \"emailmsg\":\"@{pipeline().parameters.emailMsgSuccess}\"\n}",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "web_FailedEmail",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "nb_SilverToGoldLayerProcessing",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"url": "https://prod-23.polandcentral.logic.azure.com:443/workflows/d8935d8b83b84994acb16074b1816e41/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=ou01X7aUwozpznGg4EuNfD3HsajukSMmZ7n0lNfmf3I",
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"body": {
+						"value": "{\n    \"to\":\"@{pipeline().parameters.to}\",\n    \"subject\":\"@{pipeline().parameters.subjectForFailure}\",\n    \"emailmsg\":\"@{pipeline().parameters.emailMsgFailure}\"\n}",
+						"type": "Expression"
+					}
+				}
 			}
 		],
+		"parameters": {
+			"to": {
+				"type": "string",
+				"defaultValue": "manishkumarrai3389@gmail.com"
+			},
+			"subjectForSuccess": {
+				"type": "string",
+				"defaultValue": "Fintech Data Pipeline Execution - SUCCESS"
+			},
+			"emailMsgSuccess": {
+				"type": "string",
+				"defaultValue": "Today's execution of fintech data pipeline is successfull."
+			},
+			"subjectForFailure": {
+				"type": "string",
+				"defaultValue": "Fintech Data Pipeline Execution - FAILED"
+			},
+			"emailMsgFailure": {
+				"type": "string",
+				"defaultValue": "Today's execution of fintech data pipeline is failed."
+			}
+		},
 		"variables": {
 			"TableName": {
 				"type": "String"
