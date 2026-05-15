@@ -23,17 +23,17 @@ The project implements a multi-stage ETL/ELT process orchestrated via** Azure Sy
 🛠️ Tech Stack
 --------------
 
--   **Orchestration: **Azure Synapse Analytics (Pipelines)
+-   **Orchestration:** Azure Synapse Analytics (Pipelines)
 
 -   **Compute:** Serverless Spark Pools (PySpark)
 
 -   **Storage:** ADLS Gen2, Delta Tables
 
--   **Database: **Azure SQL Database (MSSQL)
+-   **Database:** Azure SQL Database (MSSQL)
 
--   **Automation: **Azure Logic Apps (Email Notifications)
+-   **Automation:** Azure Logic Apps (Email Notifications)
 
--   **Version Control: **Git
+-   **Version Control:** Git
 
 * * * * *
 
