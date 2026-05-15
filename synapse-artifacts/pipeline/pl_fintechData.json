@@ -45,7 +45,7 @@
 						"value": "@activity('lkp_GetTableList').output.value",
 						"type": "Expression"
 					},
-					"isSequential": true,
+					"isSequential": false,
 					"activities": [
 						{
 							"name": "cp_SQLDBToBronzeLayer",
@@ -145,6 +145,79 @@
 									"type": "DatasetReference"
 								},
 								"firstRowOnly": true
+							}
+						},
+						{
+							"name": "sc_CountRecordsFromBronzeLayerTable",
+							"type": "Script",
+							"dependsOn": [
+								{
+									"activity": "cp_SQLDBToBronzeLayer",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"linkedServiceName": {
+								"referenceName": "ls_SynapseServerless",
+								"type": "LinkedServiceReference"
+							},
+							"typeProperties": {
+								"scripts": [
+									{
+										"type": "Query",
+										"text": {
+											"value": "SELECT COUNT(*) AS tgt_count\nFROM OPENROWSET(\n    BULK 'Bronze/@{item().SchemaName}/@{item().TableName}/*.parquet',\n    DATA_SOURCE = 'FintechDataExternal',\n    FORMAT = 'PARQUET'\n) AS rows;",
+											"type": "Expression"
+										}
+									}
+								],
+								"scriptBlockExecutionTimeout": "02:00:00"
+							}
+						},
+						{
+							"name": "if_CheckCount",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "lkp_CountRecordsInSourceTable",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								},
+								{
+									"activity": "sc_CountRecordsFromBronzeLayerTable",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@equals(\n    int(string(activity('lkp_CountRecordsInSourceTable').output.firstRow.src_count)),\n    int(string(activity('sc_CountRecordsFromBronzeLayerTable').output.resultSets[0].rows[0].tgt_count))\n     )",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "FailPipeline",
+										"type": "Fail",
+										"dependsOn": [],
+										"userProperties": [],
+										"typeProperties": {
+											"message": "source records count did not match with bronze records",
+											"errorCode": "404"
+										}
+									}
+								]
 							}
 						}
 					]
