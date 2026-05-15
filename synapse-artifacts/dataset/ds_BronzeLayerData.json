@@ -5,11 +5,27 @@
 			"referenceName": "ls_TargetADLS",
 			"type": "LinkedServiceReference"
 		},
+		"parameters": {
+			"SchemaName": {
+				"type": "string"
+			},
+			"TableName": {
+				"type": "string"
+			}
+		},
 		"annotations": [],
 		"type": "Parquet",
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat(dataset().TableName,'.parquet')",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@concat('Bronze/',dataset().SchemaName,'/',dataset().TableName)",
+					"type": "Expression"
+				},
 				"fileSystem": "fintech"
 			},
 			"compressionCodec": "snappy"
