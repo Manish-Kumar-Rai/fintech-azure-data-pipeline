@@ -1,0 +1,19 @@
+{
+	"name": "ds_BronzeLayerData",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_TargetADLS",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileSystem": "fintech"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}
